@@ -1,0 +1,8 @@
+apply plugin: 'sonar-runner'
+
+sonarRunner {
+ sonarProperties {
+  property "sonar.projectName", "My Project Name"
+  property "sonar.projectKey", "org.sonarqube:java-gradle-simple"
+ }
+}

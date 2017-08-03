@@ -1,0 +1,32 @@
+Acquire::http::proxy "http://corp%5c<username>:<password>@inpunwbs02-wcg.corp.capgemini.com:8080";
+Acquire::https::proxy "http://corp%5c<username>:<password>@inpunwbs02-wcg.corp.capgemini.com:8080";
+
+
+
+/*
+
+	add above lines in /etc/apt/apt.conf
+
+
+*/
+
+
+FOR Windows 
+set http_proxy="http://corp%5cusername:password@inpunwbs02-wcg.corp.capgemini.com:8080";
+
+set https_proxy="http://corp%5cusername:password@inpunwbs02-wcg.corp.capgemini.com:8080";
+
+Could not resolve all dependencies for configuration ':compileClasspath'.
+> Could not resolve org.slf4j:slf4j-api:1.7.21.
+  Required by:
+      :gradledemo:unspecified
+   > Could not resolve org.slf4j:slf4j-api:1.7.21.
+      > Could not get resource 'https://jcenter.bintray.com/org/slf4j/slf4j-api/1.7.21/slf4j-api-1.7.21.pom'.
+         > Could not GET 'https://jcenter.bintray.com/org/slf4j/slf4j-api/1.7.21
+/slf4j-api-1.7.21.pom'.
+            > Connect to jcenter.bintray.com:443 [jcenter.bintray.com/108.168.24
+3.150] failed: Connection refused: connect
+
+* Try:
+Run with --stacktrace option to get the stack trace. Run with --info or --debug
+option to get more log output.

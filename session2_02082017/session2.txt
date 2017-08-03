@@ -1,0 +1,93 @@
+10.207.173.208
+
+SCM tool:
+
+Gradle: task based approach, groovey syntax.
+
+Pre-requsite :
+##
+SET M2_HOME=
+SET JAVA_HOME=C:\Program Files\Java\jdk1.7.0_80
+SET GRADLE_HOME=D:\CI\gradle-2.13
+SET PATH=%JAVA_HOME%\bin;%GRADLE_HOME%\bin
+
+Excercise 1 : work with gradle setup 
+SET gradle 
+STEP1 : create project under git local-repo with name gradledemo
+STEp2 : set the env path for above
+
+STEP 3 : initalize gradle below command will create gradle directory structure
+-----\gradeldemo>gradle init
+
+STEp 4: about build.gradle file 
+	--> apply plugin: 'java'
+
+STEp 5: 'gradle tasks' command this command will list down the task
+
+STEp 6: To list the java task remove the comment around apply plugin: 'java' and rerun step 5
+
+STEP 7 : to list down the task and its associated sub task run the below command 
+gradle tasks -all
+
+STEP 8 : Create task , addbelow line into build.gradle file
+task hello{
+	doLast(){
+	println "Hello, Devendra."	
+}
+}
+
+STEP 9: run the task by using below command 
+	gradle <taskname> -q , here q will quite other log
+	e.g gradle hello or gradle hello -q
+
+STEP 10 : If gradle is not available the nrun the command as 'gradlew <taskname>'
+
+----------
+
+Excercise 2 : Creating java project using gradle 
+
+STEP 1: Create gradle env for java project 
+	gradle init --type java-library
+
+STEP 2 : Create resource folder andadd one xml file
+
+STEP 3: command gradle test
+will fail due to dependancies , to download set the proxy setting as below 
+
+set http_proxy="http://corp%5c<encoded username>:<encoded password>@inpunwbs02-wcg.corp.capgemini.com:8080";
+
+set https_proxy="http://corp%5c<encoded username>:<encoded password>@inpunwbs02-wcg.corp.capgemini.com:8080";
+
+After this run gradle test if its still failed then change the jcenter() to mavenCentral() 
+
+---------------------------
+Exercise 3 :  
+
+STEP 1 : Open local-repo and open git bash 
+
+STEp2 : add gradledemo project using 
+
+git add gradledemo/*
+
+STEP 3 : git commit -m "Added gradle Project"
+
+STEP 4: Open jenkin and run the jenkin.war 
+
+java -jar jenkins.war --httpPort=9999
+
+STEP 5 : 
+
+Jenkins
+Plugin Manager --> Advance add proxy setting 
+
+restart the jenkin 
+
+Then add github abd glader plugin (github.hpi and gradle.hpi)
+
+Then add Global Tool configuration as
+add java , git and gradle home
+
+
+
+D:\Users\demhatre\CI\shared-repo
+

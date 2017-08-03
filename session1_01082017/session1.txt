@@ -1,0 +1,233 @@
+1] Discussion on Devops 
+https://www.slideshare.net/drluckyspin/continuous-integration
+
+--> TTd : Test driven development 
+
+Devops : CI and CD methodologies. 
+
+Spring Clouds : manages differents tool.
+
+Testing : Cucumber + Selenium
+
+During CI process : 
+Repository manager for Document geneartion.
+
+
+DVCS : GIT , distrubuted version controler service
+
+BIT KEEPER  
+
+\\10.207.173.31
+  
+DIN56003454
+
+---------------------------------------------
+GIT SESSION 
+----------------
+
+STEp 1 : Navgate to user directory e.g D:\Users\demhatre
+Create  a folder CI and under it create folder as lisa-repo , local-repo, shared-repo
+Right click Git bash here 
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/local-repo
+$ bash
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/local-repo
+$ pwd
+/d/Users/demhatre/CI/local-repo
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/local-repo
+$ git --version
+git version 2.9.0.windows.1
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/local-repo
+$ git init
+Initialized empty Git repository in D:/Users/demhatre/CI/local-repo/.git/
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/local-repo (master)
+$ ls -a
+.  ..  .git
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/local-repo (master)
+
+
+$ git branch {To check the branch}
+
+$ git log {to check the log}
+
+$ git status {to check the staus of the repositoty}
+
+Create sample document
+
+$ git status
+On branch master
+
+Initial commit
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+
+        sample.txt
+
+nothing added to commit but untracked files present (use "git add" to track)
+
+
+Staging in Git :
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/local-repo (master)
+$ git add sample.txt
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/local-repo (master)
+$ git status
+On branch master
+
+Initial commit
+
+Changes to be committed:
+  (use "git rm --cached <file>..." to unstage)
+
+        new file:   sample.txt
+
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/local-repo (master)
+$ git branch
+* master (* indicated current branch)
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/local-repo (master)
+$ git log
+commit 3111d3af8de4e08274cd7a7d92895cad71db73c6 (Git use SHA algorithm)
+Author: Mhatre <devendra.mhatre@capgemini.com>
+Date:   Tue Aug 1 17:19:20 2017 +0530
+
+    Initail commit
+
+
+---------------------------------------------
+STEP 2:
+
+Open git for shared-repo
+
+intialised wiht --bare 
+   git init --bare   : bare flag will not allow to add / delete / staging 
+
+   Here git status , git branch wont work
+   git log works.
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/shared-repo
+$ git init --bare
+Initialized empty Git repository in D:/Users/demhatre/CI/shared-repo/
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/shared-repo (BARE:master)
+
+
+
+----
+To check any remote repository associated or not with local-repo:
+git remote -v
+
+
+---------------------------------
+Create remote repositoty :
+
+git remote add <<Alliase for remote repo>>  /d/Users/demhatre/CI/shared-repo
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/local-repo (master)
+$ git remote add origin5  /d/Users/demhatre/CI/shared-repo
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/local-repo (master)
+$ git remote -v
+origin5 D:/Users/demhatre/CI/shared-repo (fetch)
+origin5 D:/Users/demhatre/CI/shared-repo (push)
+
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/local-repo (master)
+$ git push origin5 master
+Counting objects: 3, done.
+Writing objects: 100% (3/3), 234 bytes | 0 bytes/s, done.
+Total 3 (delta 0), reused 0 (delta 0)
+To D:/Users/demhatre/CI/shared-repo
+ * [new branch]      master -> master
+
+---------
+cross verify the commit id on 
+
+---------
+
+STEp 3 :
+Go to lisa-repo (Example to fetch )
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/lisa-repo
+$ git init
+Initialized empty Git repository in D:/Users/demhatre/CI/lisa-repo/.git/
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/lisa-repo (master)
+$ git remote add origin5  /d/Users/demhatre/CI/shared-repo
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/lisa-repo (master)
+$ ls
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/lisa-repo (master)
+$ git fetch origin5
+remote: Counting objects: 3, done.
+remote: Total 3 (delta 0), reused 0 (delta 0)
+Unpacking objects: 100% (3/3), done.
+From D:/Users/demhatre/CI/shared-repo
+ * [new branch]      master     -> origin5/master
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/lisa-repo (master)
+$ ls
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/lisa-repo (master)
+$ ls -a
+./  ../  .git/
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/lisa-repo (master)
+$ git branch
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/lisa-repo (master)
+$ git branch -r
+  origin5/master
+
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/lisa-repo (master)
+$ git checkout origin5/master
+Note: checking out 'origin5/master'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by performing another checkout.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -b with the checkout command again. Example:
+
+  git checkout -b <new-branch-name>
+
+HEAD is now at 3111d3a... Initail commit
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/lisa-repo ((3111d3a...))
+$ git branch -a
+* (HEAD detached at origin5/master)
+  remotes/origin5/master
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/lisa-repo ((3111d3a...))
+$ git checkout -b master origin5/master
+Branch master set up to track remote branch master from origin5.
+Switched to a new branch 'master'
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/lisa-repo (master)
+$ ls
+sample.txt
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/lisa-repo (master)
+$ git branch -a
+* master
+  remotes/origin5/master
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/lisa-repo (master)
+$ ls
+sample.txt
+
+demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/lisa-repo (master)
+$
+
+
