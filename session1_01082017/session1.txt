@@ -24,7 +24,7 @@ DIN56003454
 ---------------------------------------------
 GIT SESSION 
 ----------------
-
+### LOCAL REPO 
 STEp 1 : Navgate to user directory e.g D:\Users\demhatre
 Create  a folder CI and under it create folder as lisa-repo , local-repo, shared-repo
 Right click Git bash here 
@@ -90,6 +90,10 @@ Changes to be committed:
 
 
 demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/local-repo (master)
+
+## Commit the file 
+
+$ git commit sample.txt -m "Comment"
 $ git branch
 * master (* indicated current branch)
 
@@ -122,6 +126,7 @@ demhatre@DINMB628 MINGW64 /d/Users/demhatre/CI/shared-repo (BARE:master)
 
 
 ----
+back to local repo
 To check any remote repository associated or not with local-repo:
 git remote -v
 
