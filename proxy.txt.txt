@@ -32,3 +32,700 @@ Could not resolve all dependencies for configuration ':compileClasspath'.
 * Try:
 Run with --stacktrace option to get the stack trace. Run with --info or --debug
 option to get more log output.
+
+--------------------------------------- Spring boot example with Active MQ-----
+logging.level.org.springframework=off
+server.port=9090
+#spring.activemq.in-memory=true
+#spring.activemq.pool.enabled=false
+#spring.activemq.broker-url=tcp://localhost:61616
+#spring.activemq.user=admin
+#spring.activemq.password=secret
+
+--- jndi.properties---
+activemq.brokerURL=tcp://localhost:61616
+activemq.brokerName=EmbeddedActiveMQBroker
+activemq.jms.jndi-name=jms/ConnectionFactory
+-----------
+package foo.springboot.controller;
+
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import foo.springboot.entity.Account;
+
+@Controller
+@RequestMapping("/account")
+public class AccountController {
+	@Autowired
+	private AccountServiceFacade accountServiceFacde;
+	
+	@Autowired
+	private DataSource dataSource;
+
+	@RequestMapping(method=RequestMethod.GET, value="/get")
+	public @ResponseBody List<Account> list() {
+
+		return accountServiceFacde.list();
+	}
+
+	@RequestMapping(method = RequestMethod.GET, value = "/get/{accountId}")
+	public @ResponseBody List<Account> getByAccountId(@PathVariable String accountId) {
+		return accountServiceFacde.getByAccountId(Long.parseLong(accountId));
+	}
+
+	@RequestMapping(method = RequestMethod.GET)
+	public @ResponseBody String  create() {
+		//return accountServiceFacde.create(account);
+		
+		return "Datasource :::" + dataSource;
+	}
+
+	@RequestMapping(method = RequestMethod.DELETE)
+	public @ResponseBody List<Account> delete(Long accountId) {
+		return null;
+	}
+}
+
+--------
+package foo.springboot.controller;
+
+import java.util.List;
+
+import org.springframework.context.annotation.ComponentScan;
+
+import foo.springboot.entity.Account;
+
+@ComponentScan
+public interface AccountService {
+	
+	public List<Account> list() ;
+}
+
+--------
+package foo.springboot.controller;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import foo.springboot.entity.Account;
+
+@Service
+public class AccountServiceFacade { //implements AccountService{
+
+	private List<Account> accountList = new ArrayList<Account>(
+			Arrays.asList(new Account(1001L, "TEST1", "shortName1", "shortname2", 6001L),
+					new Account(1002L, "TEST2", "shortName1", "shortname2", 6002L),
+					new Account(1003L, "TEST3", "shortName1", "shortname2", 6003L),
+					new Account(1004L, "TEST4", "shortName1", "shortname2", 6003L)));
+
+	//@Bean
+	public List<Account> list() {
+		return accountList;
+	}
+	
+	public List<Account> getByAccountId(Long id) {
+		Account account =  null; //accountList.stream().filter(t -> t.getAccountId().equals(id)).findFirst().get();
+		return new ArrayList<Account>(
+				Arrays.asList(account));
+	}
+	
+	
+	public List<Account> create(Account account) {
+		accountList.add(account);
+		return list();
+	}
+}
+
+--------
+package foo.springboot.controller;
+
+import java.net.URI;
+import java.util.Properties;
+
+import javax.annotation.Resource;
+import javax.jms.Queue;
+import javax.jms.QueueConnectionFactory;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
+
+import org.apache.activemq.broker.BrokerService;
+import org.apache.activemq.broker.TransportConnector;
+import org.apache.activemq.command.ActiveMQQueue;
+import org.apache.catalina.Context;
+import org.apache.catalina.startup.Tomcat;
+import org.apache.tomcat.util.descriptor.web.ContextResource;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainer;
+import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainerFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
+import org.springframework.jms.annotation.EnableJms;
+import org.springframework.jndi.JndiObjectFactoryBean;
+import org.springframework.jndi.JndiTemplate;
+
+@SpringBootApplication
+@PropertySource({ "jndi.properties" })
+@EnableJms
+public class BootDemo {
+
+	@Resource
+	private Environment env;
+
+	@Value("${activemq.brokerURL}")
+	private String brokerUrl;
+	@Value("${activemq.brokerName}")
+	private String brokerName;
+	@Value("${activemq.jms.jndi-name}")
+	private String jmsJndiName;
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		try {
+			SpringApplication.run(BootDemo.class, args);
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+	}
+
+	@Bean
+	public TomcatEmbeddedServletContainerFactory tomcatFactory() {
+
+		return new TomcatEmbeddedServletContainerFactory() {
+
+			@Override
+			protected TomcatEmbeddedServletContainer getTomcatEmbeddedServletContainer(
+					Tomcat tomcat) {
+				// TODO Auto-generated method stub
+				tomcat.enableNaming();
+				return super.getTomcatEmbeddedServletContainer(tomcat);
+			}
+
+			@Override
+			protected void postProcessContext(Context context) {
+				
+				System.out.println("brokerUrl:::"+brokerUrl);
+				System.out.println("brokerName:::"+brokerName);
+				System.out.println("jmsJndiName::::"+jmsJndiName);
+				
+				ContextResource resource = new ContextResource();
+				resource.setName("jdbc/alertread");
+				resource.setProperty("factory",
+						"org.apache.commons.dbcp.BasicDataSourceFactory");
+				resource.setType(DataSource.class.getName());
+				resource.setProperty("driverClassName",
+						"oracle.jdbc.OracleDriver");
+				resource.setProperty("url",
+						"jdbc:oracle:thin:@localhost:1521:orcl");
+				resource.setProperty("password", "alert");
+				resource.setProperty("username", "alert");
+
+				ContextResource jmsResource = new ContextResource();
+				jmsResource.setName(jmsJndiName);
+				jmsResource.setProperty("factory",
+						"org.apache.activemq.jndi.JNDIReferenceFactory");
+				jmsResource
+						.setType(org.apache.activemq.ActiveMQConnectionFactory.class
+								.getName());
+				jmsResource.setAuth("Container");
+				jmsResource.setProperty("brokerURL", brokerUrl);
+				jmsResource.setProperty("brokerName", brokerName);
+
+				context.getNamingResources().addResource(resource);
+				context.getNamingResources().addResource(jmsResource);
+			}
+		};
+
+	}
+
+	@Bean
+	public BrokerService createBrokerService() throws Exception {
+		BrokerService broker = new BrokerService();
+		TransportConnector connector = new TransportConnector();
+		connector.setUri(new URI(brokerUrl));
+		broker.addConnector(connector);
+		broker.setPersistent(false);
+
+		return broker;
+	}
+
+	@Bean(destroyMethod = "")
+	public DataSource jndiDataSource() throws IllegalArgumentException,
+			NamingException {
+		JndiObjectFactoryBean bean = new JndiObjectFactoryBean();
+		bean.setJndiName("jdbc/alertread");
+		bean.setResourceRef(true);
+		bean.setProxyInterface(DataSource.class);
+		bean.setLookupOnStartup(true);
+		bean.afterPropertiesSet();
+		return (DataSource) bean.getObject();
+	}
+
+	@Bean
+	@Qualifier("queueConnFactory")
+	public QueueConnectionFactory queueConnectionFactory() {
+
+		QueueConnectionFactory queueConnectionFactory = null;
+		try {
+			JndiTemplate jndiTemplate = jndiTemplate();
+			queueConnectionFactory = (QueueConnectionFactory) jndiTemplate
+					.lookup("java:comp/env/"+jmsJndiName);
+		} catch (NamingException e) {
+			throw new RuntimeException();
+		}
+		return queueConnectionFactory;
+
+		/*
+		 * JndiObjectFactoryBean bean = new JndiObjectFactoryBean();
+		 * bean.setJndiName("jms/ConnectionFactory"); bean.setResourceRef(true);
+		 * bean.setProxyInterface(javax.jms.QueueConnectionFactory.class);
+		 * bean.setLookupOnStartup(true);
+		 * bean.setExpectedType(org.apache.activemq
+		 * .ActiveMQConnectionFactory.class); try { bean.afterPropertiesSet(); }
+		 * catch (IllegalArgumentException | NamingException e) {
+		 * e.printStackTrace(); } return
+		 * (QueueConnectionFactory)bean.getObject();
+		 */
+
+		// org.apache.activemq.jndi.ActiveMQInitialContextFactory
+		// org.apache.naming.java.javaURLContextFactory
+	}
+
+	@Bean
+	@Qualifier("queue")
+	public Queue queue() {
+
+		return new ActiveMQQueue(brokerName);
+
+	}
+
+	@Bean
+	public JndiTemplate jndiTemplate() {
+		final JndiTemplate jndiTemplate = new JndiTemplate();
+		final Properties property = new Properties();
+		property.put("java.naming.factory.initial",
+				env.getProperty("java.naming.factory.initial"));
+		property.put("java.naming.provider.url", brokerUrl);
+		// property.put("connectionFactoryNames" , "QueueConnectionFactory");
+		jndiTemplate.setEnvironment(property);
+		return jndiTemplate;
+
+	}
+
+}
+
+---------
+package foo.springboot.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import foo.springboot.entity.Customer;
+
+@Controller
+@RequestMapping("/customer")
+public class CustomerController {
+	@Autowired
+	private CustomerServiceFacade service;
+
+	@RequestMapping(method = RequestMethod.POST, value = "/new")
+	public @ResponseBody String save(@RequestBody Customer customer) {
+		return service.save(customer);
+	}
+
+	/*
+	 * @RequestMapping(method = RequestMethod.GET, value = "/get}") public
+	 * @ResponseBody String get() { return "IN CUSTOMER"; }
+	 */
+
+	@RequestMapping(method = RequestMethod.GET)
+	public @ResponseBody String create() {
+		// return accountServiceFacde.create(account);
+
+		return "Datasource :::DEVENDRA";
+	}
+}
+
+----
+
+package foo.springboot.controller;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import foo.springboot.entity.Customer;
+
+@Service
+public class CustomerServiceFacade {
+	@Autowired
+	private DataSource datasource;
+
+	public String save(Customer custData) {
+
+		String sql ="INSERT INTo CUSTOMER VALUES(?,?,?,?)";
+		boolean status = false;
+		try {
+			Connection con =  datasource.getConnection();
+			
+			PreparedStatement st = con.prepareStatement(sql);
+			st.setLong(1, custData.getId());
+			st.setString(2,custData.getName());
+			st.setString(3,custData.getEmail());
+			st.setString(4,custData.getDate());
+			st.execute();
+			status = true;
+			//.executeUpdate(sql);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			status = false;
+			System.out.print(e);
+			e.printStackTrace();
+			
+		}
+		
+		return (status == true ? custData.getName() + " CUSTOMER SAVED": "FAILED Customer");
+		
+		//return "Hi Customer::"+custData.getName();
+	}
+
+}
+
+--------
+package foo.springboot.controller;
+
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class LoginControler {
+	@RequestMapping("/")
+	public String welcome() {
+		//model.put("title", TITLE);
+		//model.put("message", MESSAGE);
+		return "This is login page. Welcome here ";
+	}
+
+}
+---------
+package foo.springboot.controller;
+
+import javax.jms.Queue;
+import javax.jms.QueueConnectionFactory;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jms.annotation.JmsListener;
+import org.springframework.stereotype.Component;
+@Component
+public class Receiver {
+
+	@Autowired
+	Queue queue;
+	
+	@Autowired
+	QueueConnectionFactory queueConnFactory;
+	
+	//@Override
+	@JmsListener(destination = "EmbeddedActiveMQBroker")
+	public void receiveQueue(String text) {
+		System.out.println("Inside Receiver ::"+text);
+		if(text.equalsIgnoreCase("Quit")) System.exit(1);
+	}
+
+	/*public void run(String  arg0) throws Exception {
+		System.out.println("Inside Receiver "+ arg0);
+		// TODO Auto-generated method stub
+		Properties env = new Properties();					   				env.put(Context.INITIAL_CONTEXT_FACTORY,
+				"org.apache.activemq.jndi.ActiveMQInitialContextFactory");
+		env.put(Context.PROVIDER_URL, "tcp://localhost:61616");
+		env.put("queue.queueSampleQueue","MyNewQueue");
+		// get the initial context
+		InitialContext ctx = new InitialContext(env);
+
+		// lookup the queue object
+		Queue queue = (Queue) ctx.lookup("queueSampleQueue");
+
+		// lookup the queue connection factory
+		QueueConnectionFactory connFactory = (QueueConnectionFactory) ctx.lookup("QueueConnectionFactory");
+
+		// create a queue connection
+		QueueConnection queueConn = queueConnFactory.createQueueConnection();
+
+		// create a queue session
+		QueueSession queueSession = queueConn.createQueueSession(false,Session.AUTO_ACKNOWLEDGE);
+
+		// create a queue receiver
+		QueueReceiver queueReceiver = queueSession.createReceiver(queue);
+
+		// start the connection
+		queueConn.start();
+
+		// receive a message
+		TextMessage message = (TextMessage) queueReceiver.receive();
+
+		// print the message
+		System.out.println("received: " + message.getText());
+
+		// close the queue connection
+		queueConn.close();
+	}*/
+
+}
+
+----
+package foo.springboot.controller;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+import javax.jms.DeliveryMode;
+import javax.jms.Queue;
+import javax.jms.QueueConnection;
+import javax.jms.QueueConnectionFactory;
+import javax.jms.QueueSender;
+import javax.jms.QueueSession;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+
+@Component
+public class Sender implements CommandLineRunner{
+	
+	@Autowired
+	Queue queue;
+	
+	@Autowired
+	QueueConnectionFactory queueConnFactory;
+	
+	@Override
+	public void run(String ... args) throws Exception {
+		System.out.println("Inside Sender ");
+		
+		// create a queue connection
+		QueueConnection queueConn = queueConnFactory.createQueueConnection();
+
+		// create a queue session
+		QueueSession queueSession = queueConn.createQueueSession(false,Session.DUPS_OK_ACKNOWLEDGE);
+
+		// create a queue sender
+		QueueSender queueSender = queueSession.createSender(queue);
+		queueSender.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
+		
+		String msg = null;
+		BufferedReader br = null;
+		br = new BufferedReader(new InputStreamReader(System.in));
+		
+		System.out.println("Start sending message ........");
+		do{
+			msg = br.readLine();
+			// create a simple message to say "Hello"
+			TextMessage message = queueSession.createTextMessage(msg);
+
+			// send the message
+			queueSender.send(message);
+
+			System.out.println("sent: " + message.getText());
+		}while(!msg.equalsIgnoreCase("Quit"));
+		
+
+		queueConn.close();
+	}
+}
+
+--------
+package foo.springboot.entity;
+
+public class Account {
+	Long accountId;
+	String accessCd;
+	String shortName1;
+	String shortname2;
+	Long accountOrgId;
+
+	public Account() {
+		super();
+	}
+
+	public Account(Long accountId, String accessCd, String shortName1, String shortname2, Long accountOrgId) {
+		super();
+		this.accountId = accountId;
+		this.accessCd = accessCd;
+		this.shortName1 = shortName1;
+		this.shortname2 = shortname2;
+		this.accountOrgId = accountOrgId;
+	}
+
+	public Long getAccountId() {
+		return accountId;
+	}
+
+	public void setAccountId(Long accountId) {
+		this.accountId = accountId;
+	}
+
+	public String getAccessCd() {
+		return accessCd;
+	}
+
+	public void setAccessCd(String accessCd) {
+		this.accessCd = accessCd;
+	}
+
+	public String getShortName1() {
+		return shortName1;
+	}
+
+	public void setShortName1(String shortName1) {
+		this.shortName1 = shortName1;
+	}
+
+	public String getShortname2() {
+		return shortname2;
+	}
+
+	public void setShortname2(String shortname2) {
+		this.shortname2 = shortname2;
+	}
+
+	public Long getAccountOrgId() {
+		return accountOrgId;
+	}
+
+	public void setAccountOrgId(Long accountOrgId) {
+		this.accountOrgId = accountOrgId;
+	}
+
+}
+
+--------
+package foo.springboot.entity;
+
+public class Customer {
+
+	// "customer_seq" is Oracle sequence name.
+
+	Long id;
+
+	String name;
+
+	String email;
+
+	String date;
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public String getDate() {
+		return date;
+	}
+
+	public void setDate(String date) {
+		this.date = date;
+	}
+
+}
+
+--------
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>foo.springboot.activemq</groupId>
+	<artifactId>springboot-activemq-demo</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>Spring boot with Active MQ </name>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>1.5.4.RELEASE</version>
+	</parent>
+
+	<dependencies>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-activemq</artifactId>
+			<version>1.5.4.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+		    <groupId>org.apache.activemq</groupId>
+		    <artifactId>activemq-kahadb-store</artifactId>
+		</dependency>
+		 
+		<dependency>
+		    <groupId>org.springframework</groupId>
+		    <artifactId>spring-jms</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.oracle</groupId>
+			<artifactId>ojdbc6</artifactId>
+			<version>11.2.0.4</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>commons-dbcp</groupId>
+			<artifactId>commons-dbcp</artifactId>
+		</dependency>
+	</dependencies>
+	<properties>
+		<java.version>1.7</java.version>
+	</properties>
+</project>
+
